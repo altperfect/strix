@@ -7,6 +7,7 @@ import os
 import shutil
 import socket
 import struct
+import subprocess
 import sys
 import threading
 from pathlib import Path
@@ -19,6 +20,33 @@ from strix.config.settings import DEFAULT_MAX_TURNS
 from strix.interface.tui import runtime as go_tui
 from strix.interface.tui import sidecar
 from strix.interface.tui.runtime import GoTuiRuntime
+
+
+def test_runtime_import_keeps_scan_stack_lazy() -> None:
+    deferred_modules = (
+        "agents",
+        "strix.config.models",
+        "strix.core.hooks",
+        "strix.core.runner",
+        "strix.report.state",
+    )
+    runtime_args = vars(args())
+    script = (
+        "import argparse, json, sys\n"
+        "from strix.interface.tui.runtime import GoTuiRuntime\n"
+        f"GoTuiRuntime(argparse.Namespace(**{runtime_args!r}))\n"
+        f"print(json.dumps([name for name in {deferred_modules!r} if name in sys.modules]))\n"
+    )
+
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", script],
+        check=True,
+        capture_output=True,
+        env={**os.environ, "LITELLM_LOCAL_MODEL_COST_MAP": "True"},
+        text=True,
+    )
+
+    assert json.loads(result.stdout) == []
 
 
 def args() -> argparse.Namespace:

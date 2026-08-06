@@ -10,8 +10,6 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from pathlib import Path
 
-from agents.tool import ToolOutputImage
-
 from strix.core.paths import runtime_state_dir
 from strix.interface.tui.history import load_session_history
 
@@ -498,6 +496,8 @@ def _image_url_from_result(result: Any) -> str | None:
             url = result.get("image_url")
             return url if isinstance(url, str) and url.startswith("data:image/") else None
         return None
+    from agents.tool import ToolOutputImage  # noqa: PLC0415
+
     if isinstance(result, ToolOutputImage) and isinstance(result.image_url, str):
         return result.image_url if result.image_url.startswith("data:image/") else None
     return None

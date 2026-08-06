@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from strix.config import load_settings
-from strix.config.models import is_recommended_or_frontier_model
 from strix.config.settings import DEFAULT_MAX_TURNS
 from strix.interface.tui.backend.live_view import TuiLiveView
 from strix.interface.tui.backend.projection import (
@@ -172,10 +171,14 @@ class TuiController:
         with contextlib.suppress(Exception):
             subscription = is_subscription_run(self.report_state)
         model_warning = ""
-        if model and not is_recommended_or_frontier_model(model):
-            model_warning = (
-                f"{model} is not a recommended frontier model; pentest quality could be degraded"
-            )
+        if model:
+            from strix.config.models import is_recommended_or_frontier_model
+
+            if not is_recommended_or_frontier_model(model):
+                model_warning = (
+                    f"{model} is not a recommended frontier model; "
+                    "pentest quality could be degraded"
+                )
         state = {
             "setup_mode": self.setup_mode,
             "scan_started": self.scan_started,

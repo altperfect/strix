@@ -15,8 +15,6 @@ from typing import TYPE_CHECKING, Any
 
 from strix.config import load_settings, persist_current
 from strix.core.agents import AgentCoordinator
-from strix.core.hooks import BudgetExceededError
-from strix.core.runner import run_strix_scan
 from strix.interface.scan_setup import (
     build_targets_info,
     preflight_model_connection,
@@ -35,7 +33,6 @@ from strix.interface.tui.sidecar import (
     tui_source_dir,
     wait_process,
 )
-from strix.report.state import ReportState, set_global_report_state
 from strix.utils.resource_paths import get_strix_resource_path
 
 
@@ -43,6 +40,16 @@ if TYPE_CHECKING:
     import argparse
     import socket
     import subprocess
+
+    from strix.core.runner import run_strix_scan
+    from strix.report.state import ReportState
+else:
+
+    async def run_strix_scan(**kwargs: Any) -> Any:
+        from strix.core.runner import run_strix_scan as _run_strix_scan
+
+        return await _run_strix_scan(**kwargs)
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +79,8 @@ class GoTuiRuntime:
         self.server = TuiBackendServer(self.controller)
 
     def init_run_state(self) -> None:
+        from strix.report.state import ReportState, set_global_report_state
+
         self.scan_config = {
             "scan_id": self.args.run_name,
             "targets": self.args.targets_info,
@@ -170,6 +179,8 @@ class GoTuiRuntime:
             self.scan_task = asyncio.create_task(self._run_scan())
 
     async def _run_scan(self) -> None:
+        from strix.core.hooks import BudgetExceededError
+
         image = str(load_settings().runtime.image or "strix-sandbox:latest")
         try:
             await run_strix_scan(

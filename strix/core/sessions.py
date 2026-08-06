@@ -7,28 +7,29 @@ import logging
 from typing import TYPE_CHECKING, Any, cast
 from weakref import WeakKeyDictionary
 
-from agents.items import ItemHelpers
-from agents.memory import SQLiteSession
-
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
     from agents.items import TResponseInputItem
-    from agents.memory import Session
+    from agents.memory import Session, SQLiteSession
 
 
 logger = logging.getLogger(__name__)
 
 
 def open_agent_session(agent_id: str, path: Path) -> SQLiteSession:
+    from agents.memory import SQLiteSession  # noqa: PLC0415
+
     path.parent.mkdir(parents=True, exist_ok=True)
     return SQLiteSession(session_id=agent_id, db_path=path)
 
 
 async def seed_initial_input(session: Session, initial_input: Any) -> bool:
     """Commit an agent's opening identity/task input before its first run cycle."""
+    from agents.items import ItemHelpers  # noqa: PLC0415
+
     items = ItemHelpers.input_to_new_input_list(initial_input)
     if not items:
         return False
