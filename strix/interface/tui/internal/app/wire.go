@@ -40,6 +40,8 @@ func (m *Model) handleEnvelope(envelope protocol.Envelope) tea.Cmd {
 			m.showSplash = false
 			m.input.Placeholder = setupPlaceholder
 		} else {
+			// Keep the splash only when it is carrying the model-quality warning.
+			m.showSplash = m.showSplash && m.snapshot.ModelWarning != ""
 			m.input.Placeholder = chatPlaceholder
 		}
 		m.selectedAgent = selectedAgentIndex(m.snapshot.Agents, selectedAgentID)

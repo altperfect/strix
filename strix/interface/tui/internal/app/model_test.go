@@ -273,6 +273,60 @@ func TestSetupUsesDedicatedStartScreen(t *testing.T) {
 
 func floatPointer(value float64) *float64 { return &value }
 
+func TestStateSnapshotDismissesSplashUnlessItCarriesWarning(t *testing.T) {
+	tests := []struct {
+		name            string
+		initialSplash   bool
+		setupMode       bool
+		modelWarning    string
+		wantSplash      bool
+		wantPlaceholder string
+	}{
+		{
+			name:            "direct launch",
+			initialSplash:   true,
+			wantPlaceholder: chatPlaceholder,
+		},
+		{
+			name:            "direct launch with model warning",
+			initialSplash:   true,
+			modelWarning:    "model quality could be degraded",
+			wantSplash:      true,
+			wantPlaceholder: chatPlaceholder,
+		},
+		{
+			name:            "dismissed warning splash stays dismissed",
+			modelWarning:    "model quality could be degraded",
+			wantPlaceholder: chatPlaceholder,
+		},
+		{
+			name:            "setup launch",
+			initialSplash:   true,
+			setupMode:       true,
+			modelWarning:    "model quality could be degraded",
+			wantPlaceholder: setupPlaceholder,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			model := New(nil)
+			model.width, model.height = 130, 34
+			model.showSplash = tt.initialSplash
+			model.handleEnvelope(stateEnvelope(t, 1, protocol.Snapshot{
+				SetupMode:    tt.setupMode,
+				ModelWarning: tt.modelWarning,
+			}))
+			if model.showSplash != tt.wantSplash {
+				t.Fatalf("showSplash = %v, want %v", model.showSplash, tt.wantSplash)
+			}
+			if model.input.Placeholder != tt.wantPlaceholder {
+				t.Fatalf("input placeholder = %q, want %q", model.input.Placeholder, tt.wantPlaceholder)
+			}
+		})
+	}
+}
+
 func TestStartedSnapshotTransitionsToLiveView(t *testing.T) {
 	model := New(nil)
 	model.width, model.height = 130, 34
